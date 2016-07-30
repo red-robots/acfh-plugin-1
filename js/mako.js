@@ -1,6 +1,40 @@
 (function($){
+	//setup common variables
+	var $makoframe = $('<div id="makoframe"></div>');
+	var $makopublishbutton = $('<div id="makopublishbutton">PUBLISH</div>');
+	var $makobutton = $('<div id="makobutton">MAKO</div>');
+	var $original_body_contents = $("body > *");
+	var $original_mako_object = {};
+	
+	/*
+	 * Helper functions
+	 */
+	
+	Array.prototype.trimArray = function(){
+		this.forEach(function(item,i,array){
+			array[i] = item.trim();
+		});
+		return this;
+	};
+	function removeDuplicates($jquery){
+		var temp = {};
+		var $this = $(this);
+		$jquery.each(function(){
+			if(temp[$this.attr("data-mako")]===undefined){
+				$jquery = $jquery.not($this);
+			}
+			else {
+				temp[$this.attr("data-mako")] = true;
+			}
+		});
+	}
+	
+	/*
+	 * Core Functionality
+	 */
+	
 	function pre_mako_dom_modification_initialize(){
-		$('.mako').each(function(){
+		$original_body_contents.find('.mako').each(function(){
 			var $this = $(this);
 			//style parent with childs tag
 			$this.parent().attr({
@@ -10,30 +44,34 @@
 			$this.remove();
 		});
 	}
+	
+	function pre_mako_setup_objects(){
+		$original_body_contents.find('[data-mako]').each(function(){
+			var $this = $(this);
+			if($original_mako_object[$this.attr("data-mako")]===undefined)
+				$original_mako_object[$this.attr("data-mako")] = $this;
+		});
+	}
+	
 	function mako_frontend_intialize(){
 		//setup front overlay and button for toggle
-		var $makoframe = $('<div id="makoframe"></div>');
-		var $makopublishbutton = $('<div id="makopublishbutton">PUBLISH</div>');
-		var $makobutton = $('<div id="makobutton">MAKO</div>');
-		var $body_contents = $("body > *");
-		$body_contents.each(function(){
+		$original_body_contents.each(function(){
 			$makoframe.append($(this).clone());
 		});
 		//append the mako overlay and buttons
 		$("body").append($makobutton).append($makoframe.append($makopublishbutton));
 	}
+	
 	function mako_cleanup_dom(){
 		//cleanup original dom
-		$("body > *").not("#makoframe").find("[data-mako]").removeAttr("data-mako");
+		$original_body_contents.find("[data-mako]").removeAttr("data-mako");
 	}
+	
 	function mako_add_functionality_mako_button(){
 		//add functionality for overlay and toggle
-		var $makobutton = $('#makobutton');
-		var $makoframe = $('#makoframe');
-		var $body_contents = $("body > *").not("#makoframe").not("#makobutton").not("#makopublishbutton");
 		var hidden_flag = true;
 		//set attribute with original opacity for all dom elements in case set by other js functions
-		$body_contents.each(function(){
+		$original_body_contents.each(function(){
 			$(this).attr({
 				"data-mako-opacity":$(this).css("opacity"),
 			});
@@ -45,7 +83,7 @@
 				$makoframe.css({	
 					"display":"block",
 				});
-				$body_contents.each(function(){
+				$original_body_contents.each(function(){
 					$(this).css({
 						"opacity":0,
 					});
@@ -57,7 +95,7 @@
 				$makoframe.css({
 					"display":"",
 				});
-				$body_contents.each(function(){
+				$original_body_contents.each(function(){
 					$(this).css({
 						"opacity":$(this).attr("data-mako-opacity")!==undefined?$(this).attr("data-mako-opacity"):"",
 					});
@@ -66,20 +104,70 @@
 			}
 		});
 	}
+	
 	function mako_add_functionality_editable(){
 		//add functionality for editableness
-		$("#makoframe").find("[data-mako]").attr({
+		$makoframe.find("[data-mako]").attr({
 			"contenteditable":"true",
 		});
 	}
+	
 	function mako_add_functionality_publish(){
 		//add functionality for publishing edits
-		//have to read all mako properties on click and formulate ajax request for each to api to update information
-		//refresh browser on publish
-		//location.reload();
+		var base_url = wpApiSettings.root + 'wp/v2/';//setup base url
+		$makopublishbutton.on('click',function(){
+			//for each mako data-mako tag
+			var $mako = $makoframe.find('[data-mako]');
+			removeDuplicates($mako);
+			$mako.each(function(){
+				var $this = $(this);
+				//check to see if content changed do nothing on error or no change
+				var original_text=$original_mako_object[$this.attr("data-mako")].text();
+				var this_text = $this.text();
+				if(original_text!==undefined && this_text!==undefined){
+					original_text = original_text.toString();
+					this_text = this_text.toString();
+					if(original_text == this_text)
+						return;
+				} else return;
+				//setup variables for ajax call
+				var sub_url = "";//setup sub url
+				var data = {};//setup object for data
+				var data_mako_array = $(this).attr("data-mako").split(";").trimArray();
+				if(data_mako_array.length!==2)
+					return;
+				var sub_url_vars = data_mako_array[0].split("-").trimArray();
+				if(sub_url_vars.length<2)
+					return;
+				if(sub_url_vars[0]=="post"||sub_url_vars[0]=="page")
+					sub_url_vars[0]+="s";
+				sub_url = sub_url + sub_url_vars[0] +"/"+sub_url_vars[1];
+				data[data_mako_array[1]] = this_text;
+				//call ajax function to update through api 
+				$.ajax({
+					type: "POST",
+					url: base_url+sub_url,
+					data: data,
+					dataType: "text",
+					//from api manual
+					beforeSend: function ( xhr ) {
+						xhr.setRequestHeader( 'X-WP-Nonce', wpApiSettings.nonce );
+					},
+					error: function(){
+						alert("Error in AJAX Call to update data");
+					},
+					success: function(){
+						location.reload();
+					},
+				});
+			});
+		});
 	}
+	
 	//first mark the parents
 	pre_mako_dom_modification_initialize();
+	//then setup backend object catalog
+	pre_mako_setup_objects();
 	//then setup the front end
 	mako_frontend_intialize();
 	//cleanup the original dom
