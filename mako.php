@@ -1,12 +1,20 @@
 <?php
 /*
  * Plugin Name: Mako
+ *
+ * code inspired by askimet
  */
 
-function tag_posts($posts){
-	foreach($posts as $post):
-		$post->post_content = $post->post_content.'<i class="mako content-'.$post->ID.'"></i>';
-	endforeach;
-	return $posts;
+// Make sure we don't expose any info if called directly
+if ( !function_exists( 'add_action' ) ) {
+	echo 'Hi there!  I\'m just a plugin, not much I can do when called directly.';
+	exit;
 }
-add_filter("the_posts","tag_posts");
+
+define( 'MAKO_PLUGIN_DIR', dirname( __FILE__ ).'\\');
+
+require_once(MAKO_PLUGIN_DIR."\class.mako.php");
+
+//on init run mako
+add_action( 'init', array( 'Mako', 'init' ) );
+
