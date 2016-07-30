@@ -1,4 +1,10 @@
 (function($){
+	/**
+	 * TODO: Link all elements with the same id string
+	 *
+	 */
+	
+	
 	//setup common variables
 	var $makoframe = $('<div id="makoframe"></div>');
 	var $makopublishbutton = $('<div id="makopublishbutton">PUBLISH</div>');
@@ -45,11 +51,22 @@
 		});
 	}
 	
-	function pre_mako_setup_objects(){
+	function pre_mako_setup_objects_and_link(){
 		$original_body_contents.find('[data-mako]').each(function(){
 			var $this = $(this);
-			if($original_mako_object[$this.attr("data-mako")]===undefined)
-				$original_mako_object[$this.attr("data-mako")] = $this;
+			var data_mako = $this.attr("data-mako");
+			//if not previously registered add to original elements object
+			if($original_mako_object[data_mako]===undefined)
+				$original_mako_object[data_mako] = $this;
+			else {//else link text for objects
+				var $same_els = $('[data_mako='+data_mako+']');
+				//on text change for same elements
+				$same_els.on("change",function(){
+					var $this = $(this);
+					//update text for same elements throughout dom
+					$same_els.not($this).text($this.text());
+				});
+			}
 		});
 	}
 	
@@ -167,7 +184,7 @@
 	//first mark the parents
 	pre_mako_dom_modification_initialize();
 	//then setup backend object catalog
-	pre_mako_setup_objects();
+	pre_mako_setup_objects_and_link();
 	//then setup the front end
 	mako_frontend_intialize();
 	//cleanup the original dom
