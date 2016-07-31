@@ -25,6 +25,7 @@ class Mako {
 		foreach($posts as $post):
 			//add tag at the end of post_content
 			$post->post_content = $post->post_content.'<i class="mako '.$post->post_type."-".$post->ID.';content"></i>';
+			$post->post_title = $post->post_title.'<i class="mako '.$post->post_type."-".$post->ID.';title"></i>';
 		endforeach;
 		return $posts;
 	}

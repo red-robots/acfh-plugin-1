@@ -9,7 +9,7 @@
 	var $makoframe = $('<div id="makoframe"></div>');
 	var $makopublishbutton = $('<div id="makopublishbutton">PUBLISH</div>');
 	var $makobutton = $('<div id="makobutton">MAKO</div>');
-	var $original_body_contents = $("body > *");
+	var $original_body_contents = $("body > *").not($makoframe);
 	var $original_mako_object = {};
 	
 	/*
@@ -44,7 +44,7 @@
 			var $this = $(this);
 			//style parent with childs tag
 			$this.parent().attr({
-				"data-mako":$this.attr("class").replace("mako",""),
+				"data-mako":$this.attr("class").replace("mako","").trim(),
 			});
 			//remove the original tag
 			$this.remove();
@@ -58,15 +58,6 @@
 			//if not previously registered add to original elements object
 			if($original_mako_object[data_mako]===undefined)
 				$original_mako_object[data_mako] = $this;
-			else {//else link text for objects
-				var $same_els = $('[data_mako='+data_mako+']');
-				//on text change for same elements
-				$same_els.on("change",function(){
-					var $this = $(this);
-					//update text for same elements throughout dom
-					$same_els.not($this).text($this.text());
-				});
-			}
 		});
 	}
 	
@@ -77,6 +68,34 @@
 		});
 		//append the mako overlay and buttons
 		$("body").append($makobutton).append($makoframe.append($makopublishbutton));
+	}
+	
+	function mako_link_and_isolate(){
+		var $els = $makoframe.find('[data-mako]');
+		var alreadytouched = [];
+		$els.each(function(){
+			var $this_el = $(this);
+			var touched = false;
+			alreadytouched.forEach(function(){
+				if($(this)==$this_el)touched = true;
+			});
+			if(touched)return;
+			var $same_els = $makoframe.find('[data-mako="'+$(this).attr('data-mako')+'"]');
+			if($same_els.length>1){
+				var $this = $(this);
+				$same_els.not($this).each(function(){
+					//realize this may push twice but performance bump not that bad
+					alreadytouched.push($this);
+				});
+				//on text change for same elements
+				$same_els.on("keyup",function(){
+					//update text for same elements throughout dom
+					$same_els.not($(this)).text($this.text());
+				}).not($this).removeAttr("data-mako").attr({
+					"data-mako-link":"true",
+				});
+			}
+		});
 	}
 	
 	function mako_cleanup_dom(){
@@ -125,6 +144,9 @@
 	function mako_add_functionality_editable(){
 		//add functionality for editableness
 		$makoframe.find("[data-mako]").attr({
+			"contenteditable":"true",
+		});
+		$makoframe.find("[data-mako-link]").attr({
 			"contenteditable":"true",
 		});
 	}
@@ -187,6 +209,8 @@
 	pre_mako_setup_objects_and_link();
 	//then setup the front end
 	mako_frontend_intialize();
+	//link like objects
+	mako_link_and_isolate();
 	//cleanup the original dom
 	mako_cleanup_dom();
 	//add functionality for overlay and toggle
