@@ -24,8 +24,8 @@ class Mako {
 	public static function tag_posts($posts){
 		foreach($posts as $post):
 			//add tag at the end of post_content
-			$post->post_content = $post->post_content.'<i class="mako '.$post->post_type."-".$post->ID.';content"></i>';
-			$post->post_title = $post->post_title.'<i class="mako '.$post->post_type."-".$post->ID.';title"></i>';
+			$post->post_content = '<div class="mako-wrapper">'.$post->post_content.'<i class="mako '.$post->post_type."-".$post->ID.';content"></i></div>';
+			$post->post_title = '<div class="mako-wrapper">'.$post->post_title.'<i class="mako '.$post->post_type."-".$post->ID.';title"></i></div>';
 		endforeach;
 		return $posts;
 	}
