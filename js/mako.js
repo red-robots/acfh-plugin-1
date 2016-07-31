@@ -69,28 +69,30 @@
 		//append the mako overlay and buttons
 		$("body").append($makobutton).append($makoframe.append($makopublishbutton));
 	}
-	
+	function mako_remove_a_href(){
+		$makoframe.find('.mako-wrapper').parent().filter("a").removeAttr("href");
+	}
 	function mako_link_and_isolate(){
 		var $els = $makoframe.find('[data-mako]');
 		var alreadytouched = [];
 		$els.each(function(){
-			var $this_el = $(this);
+			var $this = $(this);
 			var touched = false;
 			alreadytouched.forEach(function(){
-				if($(this)==$this_el)touched = true;
+				if($(this)==$this)touched = true;
 			});
 			if(touched)return;
 			var $same_els = $makoframe.find('[data-mako="'+$(this).attr('data-mako')+'"]');
 			if($same_els.length>1){
-				var $this = $(this);
 				$same_els.not($this).each(function(){
 					//realize this may push twice but performance bump not that bad
-					alreadytouched.push($this);
+					alreadytouched.push($(this));
 				});
 				//on text change for same elements
 				$same_els.on("keyup",function(){
+					var $this = $(this);
 					//update text for same elements throughout dom
-					$same_els.not($(this)).text($this.text());
+					$same_els.not($this).text($this.text());
 				}).not($this).removeAttr("data-mako").attr({
 					"data-mako-link":"true",
 				});
@@ -100,7 +102,15 @@
 	
 	function mako_cleanup_dom(){
 		//cleanup original dom
-		$original_body_contents.find("[data-mako]").removeAttr("data-mako");
+		$original_body_contents.find(".mako-wrapper").each(function(){
+			var $this = $(this);
+			var this_text = $this.text();
+			var $original_children = $this.children();
+			var $original_parent = $this.parent();
+			$this.remove();
+			$original_parent.append($original_children);
+			$original_parent.text($original_parent.text()+this_text);
+		});
 	}
 	
 	function mako_add_functionality_mako_button(){
@@ -209,6 +219,8 @@
 	pre_mako_setup_objects_and_link();
 	//then setup the front end
 	mako_frontend_intialize();
+	//remove a href to prevent linking on mako
+	mako_remove_a_href();
 	//link like objects
 	mako_link_and_isolate();
 	//cleanup the original dom
