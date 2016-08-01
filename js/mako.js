@@ -105,11 +105,10 @@
 		$original_body_contents.find(".mako-wrapper").each(function(){
 			var $this = $(this);
 			var this_text = $this.text();
-			var $original_children = $this.children();
+			var $original_children = $this.html();
 			var $original_parent = $this.parent();
 			$this.remove();
 			$original_parent.append($original_children);
-			$original_parent.text($original_parent.text()+this_text);
 		});
 	}
 	
