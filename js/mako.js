@@ -158,12 +158,10 @@
 			$mako.each(function(){
 				var $this = $(this);
 				//check to see if content changed do nothing on error or no change
-				var original_text=$original_mako_object[$this.attr("data-mako")].text();
-				var this_text = $this.text();
-				if(original_text!==undefined && this_text!==undefined){
-					original_text = original_text.toString();
-					this_text = this_text.toString();
-					if(original_text == this_text)
+				var original_html=$original_mako_object[$this.attr("data-mako")].html();
+				var this_html = $this.html();
+				if(original_html!==undefined && this_html!==undefined){
+					if(original_html == this_html)
 						return;
 				} else return;
 				//setup variables for ajax call
@@ -178,7 +176,7 @@
 				if(sub_url_vars[0]=="post"||sub_url_vars[0]=="page")
 					sub_url_vars[0]+="s";
 				sub_url = sub_url + sub_url_vars[0] +"/"+sub_url_vars[1];
-				data[data_mako_array[1]] = $this.html();
+				data[data_mako_array[1]] = this_html;
 				//call ajax function to update through api 
 				$.ajax({
 					type: "POST",
