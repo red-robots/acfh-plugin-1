@@ -151,7 +151,7 @@
 	function mako_add_functionality_publish(){
 		//add functionality for publishing edits
 		var base_url = wpApiSettings.root + 'wp/v2/';//setup base url
-		$makopublishbutton.on('click',function(){
+		function publish_to_db(){
 			//for each mako data-mako tag
 			var $mako = $makoframe.find('[data-mako]');
 			removeDuplicates($mako);
@@ -186,6 +186,7 @@
 					//from api manual
 					beforeSend: function ( xhr ) {
 						xhr.setRequestHeader( 'X-WP-Nonce', wpApiSettings.nonce );
+						$makopublishbutton.off('click', publish_to_db);//prevent duplicates
 					},
 					error: function(){
 						alert("Error in AJAX Call to update data");
@@ -195,7 +196,8 @@
 					},
 				});
 			});
-		});
+		}
+		$makopublishbutton.on('click', publish_to_db);
 	}
 	
 	//setup backend object catalog
