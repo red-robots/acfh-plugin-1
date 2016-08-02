@@ -14,18 +14,18 @@ class Mako {
 	private static function init_hooks(){
 		self::$initiated = true;
 		//add all mako tags for frontend processing
-		add_filter("the_posts",array("Mako","tag_posts"));
+		add_action("the_posts",array("Mako","tag_all_post_types"),10,2);
 		//enqueue mako front end js
 		wp_enqueue_script("makojs",plugin_dir_url( __FILE__ )."js/mako.js",array('wp-api'),null,true);
 		//enque mako frontend stylesheet
 		wp_enqueue_style("makocss",plugin_dir_url( __FILE__ )."css/mako.css");
 	}
 	
-	public static function tag_posts($posts){
+	public static function tag_all_post_types($posts,$query){
 		foreach($posts as $post):
-			//add tag at the end of post_content
-			$post->post_content = '<div class="mako-wrapper">'.$post->post_content.'<i class="mako '.$post->post_type."-".$post->ID.';content"></i></div>';
-			$post->post_title = '<div class="mako-wrapper">'.$post->post_title.'<i class="mako '.$post->post_type."-".$post->ID.';title"></i></div>';
+			$route = $post->post_type."-".$post->ID;
+			$post->post_content = '<div class="mako" data-mako="'.$route.';content">'.$post->post_content.'</div>';
+			$post->post_title = '<div class="mako" data-mako="'.$route.';title">'.$post->post_title.'</div>';
 		endforeach;
 		return $posts;
 	}

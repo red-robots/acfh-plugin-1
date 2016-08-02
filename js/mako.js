@@ -39,18 +39,6 @@
 	 * Core Functionality
 	 */
 	
-	function pre_mako_dom_modification_initialize(){
-		$original_body_contents.find('.mako').each(function(){
-			var $this = $(this);
-			//style parent with childs tag
-			$this.parent().attr({
-				"data-mako":$this.attr("class").replace("mako","").trim(),
-			});
-			//remove the original tag
-			$this.remove();
-		});
-	}
-	
 	function pre_mako_setup_objects_and_link(){
 		$original_body_contents.find('[data-mako]').each(function(){
 			var $this = $(this);
@@ -70,7 +58,7 @@
 		$("body").append($makobutton).append($makoframe.append($makopublishbutton));
 	}
 	function mako_remove_a_href(){
-		$makoframe.find('.mako-wrapper').parent().filter("a").removeAttr("href");
+		$makoframe.find('.mako').parent().filter("a").removeAttr("href");
 	}
 	function mako_link_and_isolate(){
 		var $els = $makoframe.find('[data-mako]');
@@ -102,7 +90,7 @@
 	
 	function mako_cleanup_dom(){
 		//cleanup original dom
-		$original_body_contents.find(".mako-wrapper").each(function(){
+		$original_body_contents.find(".mako").each(function(){
 			var $this = $(this);
 			var this_text = $this.text();
 			var $original_children = $this.html();
@@ -212,9 +200,7 @@
 		});
 	}
 	
-	//first mark the parents
-	pre_mako_dom_modification_initialize();
-	//then setup backend object catalog
+	//setup backend object catalog
 	pre_mako_setup_objects_and_link();
 	//then setup the front end
 	mako_frontend_intialize();
