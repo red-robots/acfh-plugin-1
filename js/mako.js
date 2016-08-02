@@ -178,7 +178,7 @@
 				if(sub_url_vars[0]=="post"||sub_url_vars[0]=="page")
 					sub_url_vars[0]+="s";
 				sub_url = sub_url + sub_url_vars[0] +"/"+sub_url_vars[1];
-				data[data_mako_array[1]] = this_text;
+				data[data_mako_array[1]] = $this.html();
 				//call ajax function to update through api 
 				$.ajax({
 					type: "POST",
