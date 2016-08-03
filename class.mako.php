@@ -35,8 +35,13 @@ class Mako {
 	//wrapper for auto p that allows the mako block elements contents to be autopd
 	public static function makoautop($content){
 		$matches = array();
-		if(preg_match("/^(<[^>]*?mako[^>]*?>)(.*?)(<\s*?\/\s*?div\s*?>)$/i",$content,$matches)===1){
-			$content = $matches[1].wpautop($matches[2]).$matches[3];
+		if(preg_match("/\A(\<\s*div[^\>]*?mako[^\>]*?\>)/i",$content,$matches)===1){
+			$start = $matches[1];
+			$content_temp = substr($content,strlen($start));
+			if(preg_match("/(<\s*\/\s*div\s*>)\Z/i",$content_temp,$matches)===1){
+				$end = $matches[1];
+				$content = $start.wpautop(substr($content_temp,0,strlen($content_temp)-strlen($end)-1)).$end;
+			}
 		}	
 		return $content;
 	}
