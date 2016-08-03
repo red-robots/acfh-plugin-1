@@ -3,8 +3,7 @@ class Mako {
 	private static $initiated = false;
 	
 	public static function init() {		
-		global $current_user;
-		get_currentuserinfo();
+		$current_user = wp_get_current_user();
 		//only run plugin as admin editor and not on admin page
 		if ( user_can( $current_user, "edit_posts" ) && !is_admin() && ! self::$initiated ) {
 			self::init_hooks();
