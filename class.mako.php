@@ -14,6 +14,8 @@ class Mako {
 		self::$initiated = true;
 		//add all mako tags for frontend processing
 		add_action("the_posts",array("Mako","tag_all_post_types"),10,2);
+		//tag all images
+		add_action("post_thumbnail_html", array("Mako","tag_all_images"),10,5);
 		//add functionality for wpautop since it won't autop tagged posts
 		add_action("the_content",array("Mako","makoautop"),10);
 		add_action("the_excerpt",array("Mako","makoautop"),10);
@@ -31,7 +33,13 @@ class Mako {
 		endforeach;
 		return $posts;
 	}
-	
+	public static function tag_all_images($html){
+		$matches = array();
+		if(preg_match("/(.*?class\s*=\s*\".*?)(\".*)/i",$html,$matches)===1){
+			$html = $matches[1]." mako".$matches[2];
+		}
+		return $html;
+	}
 	//wrapper for auto p that allows the mako block elements contents to be autopd
 	public static function makoautop($content){
 		$matches = array();
