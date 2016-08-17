@@ -33,11 +33,10 @@ class Mako {
 		endforeach;
 		return $posts;
 	}
-	public static function tag_all_images($html){
-		$matches = array();
-		if(preg_match("/(.*?class\s*=\s*\".*?)(\".*)/i",$html,$matches)===1){
-			$html = $matches[1]." mako".$matches[2];
-		}
+	public static function tag_all_images($html, $postid){
+        $temp_post = get_post($postid);
+        $route = $temp_post->post_type."-".$postid;
+		$html='<div class="mako" data-mako="'.$route.';featured_media">'.$html.'</div>';
 		return $html;
 	}
 	//wrapper for auto p that allows the mako block elements contents to be autopd

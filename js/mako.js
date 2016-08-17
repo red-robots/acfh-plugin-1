@@ -1,6 +1,6 @@
 (function($){
 	/**
-	 * TODO: Link all elements with the same id string
+	 * 
 	 *
 	 */
 	
@@ -139,13 +139,45 @@
 	}
 	
 	function mako_add_functionality_editable(){
-		//add functionality for editableness
+		//add functionality for editableness for text and images
 		$makoframe.find("[data-mako]").attr({
 			"contenteditable":"true",
 		});
 		$makoframe.find("[data-mako-link]").attr({
 			"contenteditable":"true",
 		});
+        var $initialized = false;
+        $makoframe.find("[data-mako]").find("img").on('click',function(){
+            if($initialized){
+                $('#mako-image-picker').show();
+            }
+            else {
+                $initialized = true;
+                var url = wpApiSettings.root + 'wp/v2/media';
+                $.ajax({
+                    type: "GET",
+                    url: url,
+                    dataType: 'json',
+                    //from api manual
+                    beforeSend: function ( xhr ) {
+                        xhr.setRequestHeader( 'X-WP-Nonce', wpApiSettings.nonce );
+                    },
+                    error: function(){
+                        alert("Error in AJAX Call to retrieve images");
+                    },
+                    success: function(data){
+                        var $image_picker = $('<div id="mako-image-picker" class="mako"></div>');
+                        data.forEach(function(item,i,array){
+                            $image_picker.append($('<img class="mako-image">').attr('src',item.media_details.sizes.thumbnail.source_url));
+                        });
+                        $makoframe.append($image_picker);
+                        $('.mako-image').on('click',function(){
+                            $(this).parents('#mako-image-picker').eq(0).hide();
+                        });
+                    },
+                });
+            }
+        });
 	}
 	
 	function mako_add_functionality_publish(){
