@@ -44,9 +44,15 @@
 			var $this = $(this);
 			var data_mako = $this.attr("data-mako");
 			//if not previously registered add to original elements object
-			if($original_mako_object[data_mako]===undefined)
-				$original_mako_object[data_mako] = $this;
-		});
+			if($original_mako_object[data_mako]===undefined){
+                if($this.is('[data-mako-image]')){
+                    $original_mako_object[data_mako] = $this.attr('data-mako-image');
+                }
+                else {
+                    $original_mako_object[data_mako] = $this;
+                }
+            }
+        });
 	}
 	
 	function mako_frontend_intialize(){
@@ -61,7 +67,7 @@
 		$makoframe.find('.mako').parent().filter("a").removeAttr("href");
 	}
 	function mako_link_and_isolate(){
-		var $els = $makoframe.find('[data-mako]');
+		var $els = $makoframe.find('[data-mako]').not('[data-mako-image]');
 		var alreadytouched = [];
 		$els.each(function(){
 			var $this = $(this);
@@ -98,6 +104,7 @@
 			$this.remove();
 			$original_parent.append($original_children);
 		});
+        $original_body_contents.find("[data-mako-embedded-image]").removeAttr("data-mako-embedded-image");
 	}
 	
 	function mako_add_functionality_mako_button(){
@@ -140,16 +147,17 @@
 	
 	function mako_add_functionality_editable(){
 		//add functionality for editableness for text and images
-		$makoframe.find("[data-mako]").attr({
+		$makoframe.find("[data-mako]").not('[data-mako-iamge]').attr({
 			"contenteditable":"true",
 		});
-		$makoframe.find("[data-mako-link]").attr({
+		$makoframe.find("[data-mako-link]").not('[data-mako-iamge]').attr({
 			"contenteditable":"true",
 		});
         var $initialized = false;
-        $makoframe.find("[data-mako]").find("img").on('click',function(){
+        $makoframe.find("[data-mako-image] img, [data-mako-embedded-image]").on('click',function(){
+            $(this).addClass("mako-active-image");
             if($initialized){
-                $('#mako-image-picker').show();
+                $('#mako-image-picker').eq(0).show();
             }
             else {
                 $initialized = true;
@@ -168,11 +176,26 @@
                     success: function(data){
                         var $image_picker = $('<div id="mako-image-picker" class="mako"></div>');
                         data.forEach(function(item,i,array){
-                            $image_picker.append($('<img class="mako-image">').attr('src',item.media_details.sizes.thumbnail.source_url));
+                            $image_picker.append($('<img class="mako-image">').attr({
+                                'src':item.media_details.sizes.thumbnail.source_url,
+                                'data-mako-image-full':item.media_details.sizes.full.source_url,
+                                'data-mako-image':item.id,
+                            }));
                         });
                         $makoframe.append($image_picker);
                         $('.mako-image').on('click',function(){
-                            $(this).parents('#mako-image-picker').eq(0).hide();
+                            $this = $(this);
+                            $('.mako-active-image').attr({
+                                'src':$this.attr('data-mako-image-full'),
+                                "srcset":"",
+                            });
+                            if(!$('.mako-active-image').is('[data-mako-embedded-image]')){
+                                $('.mako-active-image').parents('[data-mako]').eq(0).attr({
+                                    'data-mako-image':$this.attr('data-mako-image'),
+                                });
+                            }
+                            $('.mako-active-image').removeClass('mako-active-image');
+                            $this.parents('#mako-image-picker').eq(0).hide();
                         });
                     },
                 });
@@ -189,17 +212,10 @@
 			removeDuplicates($mako);
 			$mako.each(function(){
 				var $this = $(this);
-				//check to see if content changed do nothing on error or no change
-				var original_html=$original_mako_object[$this.attr("data-mako")].html();
-				var this_html = $this.html();
-				if(original_html!==undefined && this_html!==undefined){
-					if(original_html == this_html)
-						return;
-				} else return;
-				//setup variables for ajax call
+                //setup variables for ajax call
 				var sub_url = "";//setup sub url
 				var data = {};//setup object for data
-				var data_mako_array = $(this).attr("data-mako").split(";").trimArray();
+				var data_mako_array = $this.attr("data-mako").split(";").trimArray();
 				if(data_mako_array.length!==2)
 					return;
 				var sub_url_vars = data_mako_array[0].split("-").trimArray();
@@ -208,7 +224,21 @@
 				if(sub_url_vars[0]=="post"||sub_url_vars[0]=="page")
 					sub_url_vars[0]+="s";
 				sub_url = sub_url + sub_url_vars[0] +"/"+sub_url_vars[1];
-				data[data_mako_array[1]] = this_html;
+                if($this.is('[data-mako-image]')){
+                    var original_id=$original_mako_object[$this.attr("data-mako")];
+                    if(original_id===$this.attr('data-mako-image'))return;
+                    data[data_mako_array[1]] = $this.attr('data-mako-image');
+                }
+                else {
+                    //check to see if content changed do nothing on error or no change
+                    var original_html=$original_mako_object[$this.attr("data-mako")].html();
+                    var this_html = $this.html();
+                    if(original_html!==undefined && this_html!==undefined){
+                        if(original_html == this_html)
+                            return;
+                    } else return;
+                    data[data_mako_array[1]] = this_html;
+                }
 				//call ajax function to update through api 
 				$.ajax({
 					type: "POST",
@@ -221,10 +251,9 @@
 						$makopublishbutton.off('click', publish_to_db);//prevent duplicates
 					},
 					error: function(){
-						alert("Error in AJAX Call to update data");
+						console.log("Error in AJAX Call to update data ");
 					},
 					success: function(){
-						location.reload();
 					},
 				});
 			});

@@ -28,15 +28,20 @@ class Mako {
 	public static function tag_all_post_types($posts,$query){
 		foreach($posts as $post):
 			$route = $post->post_type."-".$post->ID;
-			$post->post_content = '<div class="mako" data-mako="'.$route.';content">'.$post->post_content.'</div>';
+			$post->post_content = '<div class="mako" data-mako="'.$route.';content">'.self::tag_images_in_content($post->post_content).'</div>';
 			$post->post_title = '<div class="mako" data-mako="'.$route.';title">'.$post->post_title.'</div>';
 		endforeach;
 		return $posts;
 	}
-	public static function tag_all_images($html, $postid){
+	public static function tag_images_in_content($html){
+         $temp_html = preg_replace('/(\<\s*?img[^\>]*?)(\>)/i','$1'.' data-mako-embedded-image '.'$2',$html);
+        if($temp_html !== null)return $temp_html;
+        else return $html;
+	}
+	public static function tag_all_images($html, $postid, $postthumbnailid){
         $temp_post = get_post($postid);
         $route = $temp_post->post_type."-".$postid;
-		$html='<div class="mako" data-mako="'.$route.';featured_media">'.$html.'</div>';
+		$html='<div class="mako" data-mako="'.$route.';featured_media" data-mako-image="'.$postthumbnailid.'">'.$html.'</div>';
 		return $html;
 	}
 	//wrapper for auto p that allows the mako block elements contents to be autopd
