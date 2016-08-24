@@ -273,7 +273,6 @@
             //call ajax function to update through api
             var keys_length = Object.keys(publish_objs).length;
             var count = 0;
-            console.log("%O",publish_objs);
             for(var sub_url in publish_objs){
                 $.ajax({
                     type: "POST",
