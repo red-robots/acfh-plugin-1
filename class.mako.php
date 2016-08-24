@@ -19,6 +19,9 @@ class Mako {
 		//add functionality for wpautop since it won't autop tagged posts
 		add_action("the_content",array("Mako","makoautop"),10);
 		add_action("the_excerpt",array("Mako","makoautop"),10);
+		//remove original filtering so it's not done twice
+		remove_filter( 'the_content', 'wpautop' );
+        remove_filter( 'the_excerpt', 'wpautop' );
 		//enqueue mako front end js
 		wp_enqueue_script("makojs",plugin_dir_url( __FILE__ )."js/mako.js",array('wp-api'),null,true);
 		//enque mako frontend stylesheet
@@ -47,14 +50,16 @@ class Mako {
 	//wrapper for auto p that allows the mako block elements contents to be autopd
 	public static function makoautop($content){
 		$matches = array();
-		if(preg_match("/\A(\<\s*div[^\>]*?mako[^\>]*?\>)/i",$content,$matches)===1){
-			$start = $matches[1];
-			$content_temp = substr($content,strlen($start));
+		if(preg_match("/\A(\<\s*div[^\>]*?mako[^\>]*?)(\>)/i",$content,$matches)===1){
+			$start1 = $matches[1];
+			$start2 = $matches[2];
+			$totalstart = $start1.$start2;
+			$content_temp = substr($content,strlen($totalstart));
 			if(preg_match("/(<\s*\/\s*div\s*>)\Z/i",$content_temp,$matches)===1){
 				$end = $matches[1];
 				$length = strlen($content_temp)-strlen($end)-1;
 				if($length>0){
-					$content = $start.wpautop(substr($content_temp,0,$length)).$end;
+					$content = $start1.'data-mako-autop="true"'.$start2.wpautop(substr($content_temp,0,$length)).$end;
 				}
 			}
 		}	

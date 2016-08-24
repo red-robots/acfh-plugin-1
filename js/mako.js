@@ -35,17 +35,20 @@
 		});
 	}
 	function strip_p_tags($jquery){
-        var $clone = $jquery.clone();
-        $clone.children().each(function(){
-			var $this = $(this);
-            if($this.is("p")){
-                var $original_children = $this.html()+"&#10;&#13;";
-                var $original_parent = $this.parent();
-                $this.remove();
-                $original_parent.append($original_children);
-            }
-        });
-        return $clone.html();
+        if($jquery.attr("data-mako-autop")!==undefined){
+            var $clone = $jquery.clone();
+            $clone.children().each(function(){
+                var $this = $(this);
+                if($this.is("p")){
+                    var $original_children = $this.html()+"&#10;&#13;";
+                    var $original_parent = $this.parent();
+                    $this.remove();
+                    $original_parent.append($original_children);
+                }
+            });
+            return $clone.html();
+        }
+        return $jquery.html();
     }
 	/*
 	 * Core Functionality
@@ -270,6 +273,7 @@
             //call ajax function to update through api
             var keys_length = Object.keys(publish_objs).length;
             var count = 0;
+            console.log("%O",publish_objs);
             for(var sub_url in publish_objs){
                 $.ajax({
                     type: "POST",
