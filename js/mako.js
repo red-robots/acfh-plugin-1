@@ -147,12 +147,15 @@
 	
 	function mako_add_functionality_editable(){
 		//add functionality for editableness for text and images
+        
+        //functionality for text
 		$makoframe.find("[data-mako]").not('[data-mako-iamge]').attr({
 			"contenteditable":"true",
 		});
 		$makoframe.find("[data-mako-link]").not('[data-mako-iamge]').attr({
 			"contenteditable":"true",
 		});
+        //functionality for images
         var $initialized = false;
         $makoframe.find("[data-mako-image] img, [data-mako-embedded-image]").on('click',function(){
             $(this).addClass("mako-active-image");
@@ -205,16 +208,18 @@
 	
 	function mako_add_functionality_publish(){
 		//add functionality for publishing edits
-		var base_url = wpApiSettings.root + 'wp/v2/';//setup base url
 		function publish_to_db(){
 			//for each mako data-mako tag
 			var $mako = $makoframe.find('[data-mako]');
-			removeDuplicates($mako);
+            var base_url = wpApiSettings.root + 'wp/v2/';//setup base url
+			var publish_objs = {};//holds data to publish
+            removeDuplicates($mako);
+            //pre-ajax collect same objects
 			$mako.each(function(){
 				var $this = $(this);
                 //setup variables for ajax call
 				var sub_url = "";//setup sub url
-				var data = {};//setup object for data
+				var data;
 				var data_mako_array = $this.attr("data-mako").split(";").trimArray();
 				if(data_mako_array.length!==2)
 					return;
@@ -227,7 +232,7 @@
                 if($this.is('[data-mako-image]')){
                     var original_id=$original_mako_object[$this.attr("data-mako")];
                     if(original_id===$this.attr('data-mako-image'))return;
-                    data[data_mako_array[1]] = $this.attr('data-mako-image');
+                    data = $this.attr('data-mako-image');
                 }
                 else {
                     //check to see if content changed do nothing on error or no change
@@ -237,27 +242,45 @@
                         if(original_html == this_html)
                             return;
                     } else return;
-                    data[data_mako_array[1]] = this_html;
+                    data = this_html;
                 }
-				//call ajax function to update through api 
-				$.ajax({
-					type: "POST",
-					url: base_url+sub_url,
-					data: data,
-					dataType: "text",
-					//from api manual
-					beforeSend: function ( xhr ) {
-						xhr.setRequestHeader( 'X-WP-Nonce', wpApiSettings.nonce );
-						$makopublishbutton.off('click', publish_to_db);//prevent duplicates
-					},
-					error: function(){
-						console.log("Error in AJAX Call to update data ");
-					},
-					success: function(){
-					},
-				});
-			});
-		}
+                var this_obj = publish_objs[sub_url];
+                if(this_obj!==undefined){
+                    if(this_obj[data_mako_array[1]]===undefined){
+                        this_obj[data_mako_array[1]]=data;
+                    }
+                }else {
+                    var temp_data = {};
+                    temp_data[data_mako_array[1]]=data;
+                    publish_objs[sub_url]=temp_data;
+                }
+            });
+            //call ajax function to update through api
+            var keys_length = Object.keys(publish_objs).length;
+            var count = 0;
+            for(var sub_url in publish_objs){
+                $.ajax({
+                    type: "POST",
+                    url: base_url+sub_url,
+                    data: publish_objs[sub_url],
+                    dataType: "text",
+                    //from api manual
+                    beforeSend: function ( xhr ) {
+                        xhr.setRequestHeader( 'X-WP-Nonce', wpApiSettings.nonce );
+                        $makopublishbutton.off('click', publish_to_db);//prevent duplicates
+                    },
+                    error: function(){
+                        console.log("Error in AJAX Call to update data ");
+                    },
+                    success: function(){
+                        count++;
+                        if(count === keys_length){
+                            location.reload();
+                        }
+                    },
+                });
+            }
+        }
 		$makopublishbutton.on('click', publish_to_db);
 	}
 	
