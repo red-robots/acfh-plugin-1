@@ -34,7 +34,19 @@
 			}
 		});
 	}
-	
+	function strip_p_tags($jquery){
+        var $clone = $jquery.clone();
+        $clone.children().each(function(){
+			var $this = $(this);
+            if($this.is("p")){
+                var $original_children = $this.html()+"&#10;&#13;";
+                var $original_parent = $this.parent();
+                $this.remove();
+                $original_parent.append($original_children);
+            }
+        });
+        return $clone.html();
+    }
 	/*
 	 * Core Functionality
 	 */
@@ -98,7 +110,6 @@
 		//cleanup original dom
 		$original_body_contents.find(".mako").each(function(){
 			var $this = $(this);
-			var this_text = $this.text();
 			var $original_children = $this.html();
 			var $original_parent = $this.parent();
 			$this.remove();
@@ -242,8 +253,9 @@
                         if(original_html == this_html)
                             return;
                     } else return;
-                    data = this_html;
+                    data = strip_p_tags($this);
                 }
+                //add object to publish objs if it doesn't exits add to data for sub url if it does
                 var this_obj = publish_objs[sub_url];
                 if(this_obj!==undefined){
                     if(this_obj[data_mako_array[1]]===undefined){
